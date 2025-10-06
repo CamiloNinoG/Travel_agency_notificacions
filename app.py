@@ -92,7 +92,7 @@ def send_login_notification():
     try:
         data = request.get_json()
         to = data.get("to")
-        name = data.get("name", "Usuario")
+        name = data.get("name")
         ip = data.get("ip", "Desconocida")
         browser = data.get("browser", "Desconocido")
 
@@ -137,7 +137,7 @@ def send_login_notification():
         }), 200
 
     except Exception as e:
-        print("❌ Error enviando correo:", e)
+        print("Error enviando correo:", e)
         return jsonify({"status": "error", "details": str(e)}), 500
 
 

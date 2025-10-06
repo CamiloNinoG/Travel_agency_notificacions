@@ -7,6 +7,7 @@ import pickle
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -58,19 +59,32 @@ def send_email():
         data = request.get_json()
         to = data.get("to")
         subject = data.get("subject")
-        message_text = data.get("message")
+        body = data.get("body","")
+        current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        html_content = f""" <html> 
+        <body style="font-family: 'Segoe UI', Arial, sans-serif; color: #333; background-color: #f6f8fa; padding: 20px;"> 
+        <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);"> 
+        <div style="text-align: center; margin-bottom: 20px;"> 
+        <h2 style="color: #007bff; margin-bottom: 4px;">Travel Agency ✈️</h2> 
+        <p style="font-size: 0.9em; color: #888;">Notificación automática</p> 
+        </div> <h3 style="color: #222;">Hola👋</h3> 
+        <p style="font-size: 1em; line-height: 1.6;"> {body} </p> 
+        <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;" /> 
+        <p style="font-size: 0.9em; color: #555;"> 📅 <b>Fecha del envío:</b> {current_time} </p> <div style="margin-top: 25px; text-align: center;"> 
+        <a href="#" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;"> Visitar nuestro sitio </a> </div> <p style="font-size: 0.85em; color: #888; text-align: center; margin-top: 25px;"> — Equipo de Atención | <b>Travel Agency</b> 
+        </p> </div> </body> </html> """
 
-        if not to or not subject or not message_text:
+        if not to or not subject or not body:
             return jsonify({"error": "Faltan campos: 'to', 'subject', 'message'"}), 400
 
         creds = authenticate_gmail()
         service = build('gmail', 'v1', credentials=creds)
 
-        mensaje = create_message(
+        mensaje = create_message_html(
             sender="me",  # Gmail entiende "me" como la cuenta autenticada
             to=to,
             subject=subject,
-            message_text=message_text
+            html_content = html_content
         )
 
         sent_message = send_message(service, 'me', mensaje)
@@ -95,7 +109,8 @@ def send_login_notification():
         name = data.get("name")
         ip = data.get("ip", "Desconocida")
         browser = data.get("browser", "Desconocido")
-
+        current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        
         html_content = f"""
         <html>
           <body style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px;">
@@ -106,12 +121,12 @@ def send_login_notification():
               <p>Si <b>no reconoces este inicio de sesión</b>, te recomendamos cambiar tu contraseña inmediatamente.</p>
               <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
               <p style="font-size: 0.95em; color: #555;">
-                📅 <b>Fecha:</b> Ahora mismo<br>
-                🌐 <b>IP:</b> {ip}<br>
-                🧭 <b>Navegador:</b> {browser}
+            📅 <b>Fecha:</b> {current_time} <br>
+            🌐 <b>IP:</b> {ip} <br>
+            🧭 <b>Navegador:</b> {browser}
               </p>
               <p style="font-size: 0.9em; color: #888; margin-top: 20px;">
-                — Equipo de Seguridad | <b>Travel Agency</b>
+            — Equipo de Seguridad | <b>Travel Agency</b>
               </p>
             </div>
           </body>
